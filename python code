@@ -1,0 +1,304 @@
+# -*- coding: utf-8 -*-
+
+###### DECLARE CONSTANTS ######
+
+EXPRESSION_CONSTANT = ['*','/']
+FACTOR_CONSTANT = ['+','-']
+LITERAL_CONSTANT = ['0','1','2','3','4','5','6','7','8','9']
+OPERATORS = ['*','/','+','-']
+INPUT = ['*','/','+','-','0','1','2','3','4','5','6','7','8','9','(',')']
+
+
+###### CREATE EMPTY TREE ######
+class Node: 
+    def __init__(self): 
+        self.data = None
+        self.left = self.right = None
+        self.tree_list = []
+
+###### INSERTING DATA INTO THE TREE ######
+    def insertTree(self,child = None, equation = None):
+        # checks data in the equation (expression) 
+        proceed = self.boolForInput(equation)
+        
+        # if equation doesn't have valid input return empty tree 
+        # else insert value into the tree
+        if proceed != True:
+            self.data = None        
+       
+        else:
+            # process if equation doesn't begin with paranthesis
+            if equation[0] != "(":            
+                a = self.boolForExpression(equation)  
+                
+                if a != True:
+                    b = self.boolForFactor(equation)  
+                    
+                    if b != True:
+                        child.data = self.term(child,equation)
+                        
+                    else:
+                        data,l,r = self.factor(child,equation)
+                        child.data = data
+                        child.left = Node()
+                        child.right = Node()
+                        self.insertTree(child.left,l)
+                        self.insertTree(child.right,r)
+                        
+                else:                    
+                    data,l,r = self.expression(child,equation)                     
+                    child.data = data
+                    child.left = Node()
+                    child.right = Node()
+                    self.insertTree(child.left,l)
+                    self.insertTree(child.right,r)                    
+                  
+            else:                
+                # if equation continues after parantheses 
+                p_end = equation.rfind(")")
+                
+                if (len(equation)-1) > p_end:                    
+                    after_p = equation[p_end+1:]
+                    a = self.boolForExpression(after_p)
+                    
+                    if a != True:                         
+                        data,l,r = self.factor(child,equation)                        
+                        child.data = data
+                        child.left = Node()
+                        child.right = Node()
+                        self.insertTree(child.left,l)
+                        self.insertTree(child.right,r)
+                        
+                    else:                    
+                        data,l,r = self.expression(child,equation)                     
+                        child.data = data
+                        child.left = Node()
+                        child.right = Node()
+                        self.insertTree(child.left,l)
+                        self.insertTree(child.right,r)
+                        
+                # if entire equation is in between parantheses        
+                else:
+                    l,data,r = self.paranthesis(equation)
+                    
+                    if l != None:
+                        child.data = data             
+                        child.left = Node()
+                        self.insertTree(child.left,l)               
+                        child.right = Node()         
+                        self.insertTree(child.right,r)
+                        
+                    else:
+                        self.insertTree(child,data)
+                            
+
+###### BOOLEANS FOR INPUT, EXPRESSION, FACTOR, OPERATORS ######
+
+    def boolForInput(self,equation):
+        for i in range(0,len(equation)):
+            if equation[i] in INPUT:
+                return True
+         
+    def boolForExpression(self,equation):
+        p = equation.find("(")
+        
+        if p != -1:
+            for i in range(0,p+1):        
+                if equation[i] in EXPRESSION_CONSTANT:
+                    return True 
+                
+        else:        
+            for i in range(0,len(equation)):
+                if equation[i] in EXPRESSION_CONSTANT:
+                    return True 
+
+    def boolForFactor(self,equation):        
+        p = equation.find("(")
+        
+        if p != -1:
+            for i in range(0,p+1):        
+                if equation[i] in FACTOR_CONSTANT:
+                    return True 
+                
+        else:        
+            for i in range(0,len(equation)):
+                if equation[i] in FACTOR_CONSTANT:
+                    return True 
+
+    def boolForOperators(self,equation):        
+        for i in range(0,len(equation)):
+            if equation[i] in OPERATORS:
+                return True
+
+            
+###### COMPUTE EXPRESSION, FACTOR, TERM, PARANTHESES ######
+                
+    def expression(self,child,equation):        
+        if "(" in equation:
+            p_start = equation.find("(")
+            for i in range(0,p_start+1):
+                if equation[i] in EXPRESSION_CONSTANT:
+                    child.data = equation[i]
+                    l = equation[:i]
+                    r = equation[i+1:] 
+                    break  
+                
+                else:
+                    p_end = equation.rfind(")")           
+                    for i in range(p_end,len(equation)):
+                        if equation[i] in EXPRESSION_CONSTANT:
+                            child.data = equation[i]
+                            l = equation[:i]
+                            r = equation[i+1:] 
+                            break
+                        
+        else:       
+            for i in range(0,len(equation)-1):
+                if equation[i] in EXPRESSION_CONSTANT:
+                    child.data = equation[i]
+                    l = equation[:i]
+                    r = equation[i+1:] 
+                    break        
+        return child.data,l,r 
+            
+    def factor(self,child,equation):        
+        if "(" in equation:
+            p_start = equation.find("(")
+            for i in range(0,p_start+1):
+                if equation[i] in FACTOR_CONSTANT:
+                    child.data = equation[i]
+                    l = equation[:i]
+                    r = equation[i+1:] 
+                    break   
+                
+                else:                  
+                    p_end = equation.rfind(")")           
+                    for i in range(p_end,len(equation)):                       
+                        if equation[i] in FACTOR_CONSTANT:
+                            child.data = equation[i]
+                            l = equation[:i]
+                            r = equation[i+1:] 
+                            break
+        else:       
+            for i in range(0,len(equation)-1):
+                if equation[i] in FACTOR_CONSTANT:
+                    child.data = equation[i]
+                    l = equation[:i]
+                    r = equation[i+1:] 
+                    break        
+        return child.data,l,r 
+
+    def term(self,child,equation):        
+        if equation in LITERAL_CONSTANT: 
+            x = equation 
+        else:
+            x = None               
+        return x
+        
+    def paranthesis(self,equation):        
+        count = 0
+        while count < len(equation) - 1:
+            if equation[count] == "(":
+                if equation[count + 2] == ")":
+                    del equation[count + 2]
+                    del equation[count]
+            count += 1
+            
+        counter =0
+        for i in range(0,len(equation)-1):
+            
+            counter+=1         
+            if equation[i] in OPERATORS:                          
+                left = equation[:i]
+                right = equation[i+1:]
+    
+                count = 0
+                for j in range(0,len(left)):
+                    if equation[j] == "(":
+                        count += 1
+                    if equation[j] == ")": 
+                        count -= 1                
+                if count == 0:                    
+                    l = equation[1:i-1]
+                    data = equation[i]
+                    r = equation[i+1:] 
+                    break
+                    return l,data,r
+                
+                elif self.boolForOperators(right) != True:                    
+                    equation = equation[1:-1]                    
+                    if equation[0] != "(":
+                        for k in range(0,len(equation)-1):
+                            if equation[k] in OPERATORS:
+                                l = equation[:k]
+                                data = equation[k]
+                                r = equation[k+1:]                                
+                                return l,data,r                                
+                    else:
+                        data = equation
+                        l = None
+                        r = None
+                        return l,data,r
+        return l,data,r        
+
+    
+###### PRINTING THE TREE IN EULER TOUR TRAVERSAL ######
+    
+    def euler(self,root,getlist=True):         
+        if root != None: 
+            if root.left == None and root.right == None:
+                print(root.data)
+                self.tree_list.append(root.data)
+            else:
+                print("(")
+                self.tree_list.append("(")
+                self.euler(root.left)
+                print(root.data)
+                self.tree_list.append(root.data)
+                self.euler(root.right)
+                print(")")
+                self.tree_list.append(")")
+        if getlist:
+            return self.tree_list
+        else:
+            return None
+        
+        
+###### EVALUATING THE EXPRESSION TREE ######
+
+    def evaluateTree(self,root):         
+        if root.data is None:
+            print ("Invalid Input")              
+        else:
+            if root.left is None and root.right is None: 
+                return int(root.data) 
+            leftTree = self.evaluateTree(root.left) 
+            rightTree = self.evaluateTree(root.right) 
+            
+            if root.data == '+': 
+                return leftTree + rightTree 
+              
+            elif root.data == '-': 
+                return leftTree - rightTree 
+              
+            elif root.data == '*': 
+                return leftTree * rightTree 
+              
+            else: 
+                return leftTree / rightTree 
+            
+def main():
+    
+    equation = input("Enter the Expression: ") 
+    nodeobj = Node()
+    nodeobj.insertTree(nodeobj,equation)
+    value = nodeobj.euler(nodeobj)   
+    print ("Tree = ", value)
+    final_output = nodeobj.evaluateTree(nodeobj)     
+    print("Computed Value =", final_output)    
+
+
+if __name__ == "__main__":
+    main()
+
+
